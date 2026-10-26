@@ -11,10 +11,11 @@ app.use(express.static(path.join(__dirname, "..", "public")));
 const mysql = require("mysql2/promise");
 
 const db = mysql.createPool({
-    host: "localhost",
-    user: "root",
-    password: "root",
-    database: "personal_dash",
+    host: process.env.DB_HOST,
+    port: Number(process.env.DB_PORT || 3306),
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME || "personal_dash",
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
@@ -25,7 +26,11 @@ async function checkDatabase() {
         await db.query("SELECT 1");
         console.log("MySQL connected successfully!");
     } catch (err) {
-        console.error("Database error:", err.message);
+        console.error("Database connection failed:", {
+            code: err.code,
+            message: err.message,
+            errno: err.errno
+        });
     }
 }
 
@@ -93,8 +98,8 @@ app.post("/api/tasks", async (req, res) => {
       id: result.insertId
     });
   } catch (error) {
-    console.error(error.message);
-    res.status(500).json({ error: "Failed to save task" });
+    console.error("SAVE TASK ERROR:",error);
+    res.status(500).json({ error:error.message });
   }
 });
 
@@ -279,7 +284,8 @@ app.put("/api/finances/:month", async (req, res) => {
     }
 });
 
+const PORT = process.env.PORT || 3000;
 
-app.listen(3000, () => {
-    console.log("Server running at http://localhost:3000");
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server running on port ${PORT}`);
 });

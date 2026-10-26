@@ -386,11 +386,20 @@ function render() {
 async function loadTasksFromMySQL() {
     try {
         const response = await fetch("/api/tasks");
-        const result = await response.json();
+const text = await response.text();
 
-        if (!response.ok) {
-            throw new Error(result.error || "Tasks load failed");
-        }
+let result;
+
+try {
+    result = text ? JSON.parse(text) : {};
+} catch {
+    throw new Error(`Server returned invalid JSON (HTTP ${response.status})`);
+}
+
+if (!response.ok) {
+    throw new Error(result.error || `HTTP ${response.status}`);
+}
+
 
         // API should return an array of tasks
         const rows = Array.isArray(result)
